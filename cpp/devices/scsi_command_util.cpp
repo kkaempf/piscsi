@@ -33,14 +33,23 @@ string scsi_command_util::ModeSelect(scsi_command cmd, cdb_t cdb, span<const uin
 	// Skip block descriptors
 	int offset;
 	if (cmd == scsi_command::eCmdModeSelect10) {
+        	if (length < 7) {
+			spdlog::warn("Incomplete Mode parameter header(10)");
+			throw scsi_exception(sense_key::illegal_request, asc::invalid_field_in_parameter_list);
+		}
 		offset = 8 + GetInt16(buf, 6);
 	}
 	else {
+        	if (length < 4) {
+			spdlog::warn("Incomplete Mode parameter header(6)");
+			throw scsi_exception(sense_key::illegal_request, asc::invalid_field_in_parameter_list);
+		}
 		offset = 4 + buf[3];
 	}
 	length -= offset;
 
-	bool has_valid_page_code = false;
+	// treat zero length as valid
+	bool has_valid_page_code = (length == 0);
 
 	// Parse the pages
 	while (length > 0) {
@@ -62,12 +71,24 @@ string scsi_command_util::ModeSelect(scsi_command cmd, cdb_t cdb, span<const uin
 
 			has_valid_page_code = true;
 		}
+		else if (page == 0x01) {
+			// OpenVMS Alpha 7.3 uses this
+			has_valid_page_code = true;
+		}
+		else if ((page == 0x00) && (length == 1)) {
+			has_valid_page_code = true;
+			break; // page 0 is valid if last in list, might have no size byte following
+		}
 		else {
 			stringstream s;
 			s << "Unknown MODE SELECT page code: $" << setfill('0') << setw(2) << hex << page;
 			result = s.str();
 		}
 
+		if (length < 2) { // ensure there's a size byte before accessing it
+                    spdlog::warn("Current MODE SELECT page has no size");
+			throw scsi_exception(sense_key::illegal_request, asc::invalid_field_in_parameter_list);
+		}
 		// Advance to the next page
 		const int size = buf[offset + 1] + 2;
 
