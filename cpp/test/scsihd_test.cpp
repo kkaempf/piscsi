@@ -192,3 +192,15 @@ TEST(ScsiHdTest, MultiplePages)
 	hd.SetSectorSizeInBytes(2048); // pass the "page 3" sector_size test in scsi_command_util::ModeSelect
 	EXPECT_NO_THROW(hd.ModeSelect(scsi_command::eCmdModeSelect6, cmd, buf, buf.size())) << "Multiple pages are supported";
 }
+
+// Test for the ModeSelect6, page code 1 (issued by Alpha VMS)
+TEST(ScsiHdTest, PageCode1)
+{
+	MockSCSIHD hd(0, false);
+	vector<int> cmd = { 0x15, 0x10, 0x00, 0x00, 0x19, 0x00 };
+	vector<uint8_t> buf = { 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00
+		, 0x01, 0x0a, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+        };
+
+	EXPECT_NO_THROW(hd.ModeSelect(scsi_command::eCmdModeSelect6, cmd, buf, buf.size())) << "Page code 1 is supported";
+}
