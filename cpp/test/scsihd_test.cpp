@@ -140,3 +140,16 @@ TEST(ScsiHdTest, ModeSelect)
 	buf[20] = 0x02;
 	EXPECT_NO_THROW(hd.ModeSelect(scsi_command::eCmdModeSelect10, cmd, buf, 255)) << "MODE SELECT(10) is supported";
 }
+
+// Test for the ModeSelect6 to set sector size to 512 (issued by the DEC Alpha SRM console)
+TEST(ScsiHdTest, SetSectorSize)
+{
+	MockSCSIHD hd(0, false);
+	vector<int> cmd = { 0x15, 0x10, 0x00, 0x00, 0x0c, 0x00 };
+	vector<uint8_t> buf = { 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00 };
+
+	hd.SetSectorSizeInBytes(4096);
+
+	EXPECT_NO_THROW(hd.ModeSelect(scsi_command::eCmdModeSelect6, cmd, buf, buf.size())) << "Set sector size is supported";
+	// FIXME: EXPECT_EQ(9, hd.GetSectorSizeShiftCount()) << "Set sector size to 512";
+}

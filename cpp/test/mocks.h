@@ -363,6 +363,8 @@ class MockSCSIHD : public SCSIHD //NOSONAR Ignore inheritance hierarchy depth in
 	FRIEND_TEST(ScsiHdTest, DECSpecialFunctionControlPage);
 	FRIEND_TEST(ScsiHdTest, GetSectorSizes);
 	FRIEND_TEST(ScsiHdTest, ModeSelect);
+	FRIEND_TEST(ScsiHdTest, SetSectorSize);
+
 	FRIEND_TEST(PiscsiExecutorTest, SetSectorSize);
 
 public:
